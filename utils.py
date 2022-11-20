@@ -169,6 +169,26 @@ def sparse_matrix_evaluate(data, matrix, threshold=0.5):
         total_prediction += 1
     return total_accurate / float(total_prediction)
 
+def sparse_matrix_evaluate_byq(data, matrix, threshold=0.5):
+    """ Given the sparse matrix represent, return the accuracy of the prediction on data.
+
+    :param data: A dictionary {user_id: list, question_id: list, is_correct: list}
+    :param matrix: 2D matrix
+    :param threshold: float
+    :return: float
+    """
+    total_prediction = 0
+    total_accurate = 0
+    for i in range(len(data["is_correct"])):
+        cur_user_id = data["user_id"][i]
+        cur_question_id = data["question_id"][i]
+        if matrix[cur_question_id, cur_user_id] >= threshold and data["is_correct"][i]:
+            total_accurate += 1
+        if matrix[cur_question_id, cur_user_id] < threshold and not data["is_correct"][i]:
+            total_accurate += 1
+        total_prediction += 1
+    return total_accurate / float(total_prediction)
+
 
 def sparse_matrix_predictions(data, matrix, threshold=0.5):
     """ Given the sparse matrix represent, return the predictions.

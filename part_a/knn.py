@@ -1,5 +1,8 @@
 from sklearn.impute import KNNImputer
+import sys
+sys.path.append("..")
 from utils import *
+import matplotlib.pyplot as plt
 
 
 def knn_impute_by_user(matrix, valid_data, k):
@@ -37,7 +40,13 @@ def knn_impute_by_item(matrix, valid_data, k):
     # TODO:                                                             #
     # Implement the function as described in the docstring.             #
     #####################################################################
-    acc = None
+    nbrs = KNNImputer(n_neighbors=k)
+    # We use NaN-Euclidean distance measure.
+    mat = nbrs.fit_transform(matrix.T)
+    acc = sparse_matrix_evaluate_byq(valid_data, mat)
+    print("Validation Accuracy: {}".format(acc))
+    return acc
+
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
@@ -60,7 +69,45 @@ def main():
     # the best performance and report the test accuracy with the        #
     # chosen k*.                                                        #
     #####################################################################
-    pass
+    print("===== By Student =====")
+    accuracies = []
+    k_choices = [1,6,11,16,21,26]
+    # k_choices = [x*10 for x in range(1,10)]
+    for k in k_choices:
+        result = knn_impute_by_user(matrix=sparse_matrix, valid_data=val_data, k=k)
+        accuracies.append(result)
+    
+    # plt.plot(k_choices, accuracies, marker='o')
+    # plt.xlabel("k")
+    # plt.ylabel("Accuracy")
+    # plt.show()
+    # plt.savefig("part_a_q1_by_student.png")
+
+    user_plt = plt.figure("user_fig")
+    plt.plot(k_choices, accuracies, marker='o')
+    plt.xlabel("k")
+    plt.ylabel("Accuracy")
+    plt.title("User_plot")
+    plt.savefig("part_a_q1_by_student.png")
+
+    print("===== By Question =====")
+    accuracies = []
+    for k in k_choices:
+        result = knn_impute_by_item(matrix=sparse_matrix, valid_data=val_data, k=k)
+        accuracies.append(result)
+    
+    # plt.plot(k_choices, accuracies, marker='o')
+    # plt.xlabel("k")
+    # plt.ylabel("Accuracy")
+    # plt.show()
+
+    question_plt = plt.figure("user_fig")
+    plt.plot(k_choices, accuracies, marker='o')
+    plt.xlabel("k")
+    plt.ylabel("Accuracy")
+    plt.title("question_plot")
+    plt.show()
+    plt.savefig("part_a_q1_by_question.png")
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################

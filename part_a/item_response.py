@@ -24,7 +24,19 @@ def neg_log_likelihood(data, theta, beta):
     # TODO:                                                             #
     # Implement the function as described in the docstring.             #
     #####################################################################
+    for j in range(len(data["question_id"])):
+        data["question_id"][j]
+        data["is_correct"][j]
+
     log_lklihood = 0.
+    for i in range(len(data["user_id"])):
+        for j in range(len(data["question_id"])):
+            if data["is_correct"][j] == 1:
+                log_lklihood += (theta[i] - beta[j]) - np.log(1 + np.exp(theta[i] - beta[j]))
+            else:
+                log_lklihood += np.log(1 - sigmoid(theta[i]-beta[j]))
+                # log_lklihood += np.log(1 - (np.exp(theta[i] - beta[j])/(1 + np.exp(theta[i] - beta[j]))))
+
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
@@ -52,7 +64,14 @@ def update_theta_beta(data, lr, theta, beta):
     # TODO:                                                             #
     # Implement the function as described in the docstring.             #
     #####################################################################
-    pass
+    new_theta = 0
+    new_beta = 0
+    
+
+
+
+    theta = theta - lr * new_theta
+    beta = beta - lr * new_beta    
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
@@ -120,7 +139,12 @@ def main():
     # Tune learning rate and number of iterations. With the implemented #
     # code, report the validation and test accuracy.                    #
     #####################################################################
+    weight_reg = 0
+    iterations = 10
+    learning_rate = 0.5
     pass
+
+
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
@@ -129,7 +153,9 @@ def main():
     # TODO:                                                             #
     # Implement part (d)                                                #
     #####################################################################
-    pass
+    irt(iterations=iterations)
+
+
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
