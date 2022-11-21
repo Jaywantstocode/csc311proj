@@ -24,10 +24,6 @@ def neg_log_likelihood(data, theta, beta):
     # TODO:                                                             #
     # Implement the function as described in the docstring.             #
     #####################################################################
-    for j in range(len(data["question_id"])):
-        data["question_id"][j]
-        data["is_correct"][j]
-
     log_lklihood = 0.
     for i in range(len(data["user_id"])):
         for j in range(len(data["question_id"])):
@@ -64,11 +60,8 @@ def update_theta_beta(data, lr, theta, beta):
     # TODO:                                                             #
     # Implement the function as described in the docstring.             #
     #####################################################################
-    new_theta = 0
-    new_beta = 0
-    
-
-
+    new_theta = 1 - sigmoid(np.subtract(theta, beta))
+    new_beta = sigmoid(np.subtract(theta, beta)) - 1
 
     theta = theta - lr * new_theta
     beta = beta - lr * new_beta    
@@ -142,6 +135,13 @@ def main():
     weight_reg = 0
     iterations = 10
     learning_rate = 0.5
+    theta, beta, val_acc_lst = irt(train_data, val_data, learning_rate, iterations) 
+    acc = evaluate(val_data, theta, beta)
+    print(f"The validation accuracy is {acc}")
+
+    thetaT, betaT, test_acc_lst = irt(train_data, test_data, learning_rate, iterations) 
+    accT = evaluate(test_data, thetaT, betaT)
+    print(f"The testing accuracy is {accT}")
     pass
 
 
