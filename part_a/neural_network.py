@@ -36,6 +36,10 @@ def load_data(base_path="../data"):
 
     return zero_train_matrix, train_matrix, valid_data, test_data
 
+def sigmoid(x):
+        """ Apply sigmoid function.
+        """
+        return np.exp(x) / (1 + np.exp(x))
 
 class AutoEncoder(nn.Module):
     def __init__(self, num_question, k=100):
@@ -50,6 +54,9 @@ class AutoEncoder(nn.Module):
         self.g = nn.Linear(num_question, k)
         self.h = nn.Linear(k, num_question)
 
+    
+
+    
     def get_weight_norm(self):
         """ Return ||W^1||^2 + ||W^2||^2.
 
@@ -71,6 +78,7 @@ class AutoEncoder(nn.Module):
         # Use sigmoid activations for f and g.                              #
         #####################################################################
         out = inputs
+        out = sigmoid(self.h.weight * (sigmoid(self.g.weight * out + self.h.bias)) + self.g.bias)
         #####################################################################
         #                       END OF YOUR CODE                            #
         #####################################################################
@@ -162,13 +170,14 @@ def main():
     # validation set.                                                   #
     #####################################################################
     # Set model hyperparameters.
-    k = None
-    model = None
+    k = [10, 50, 100, 200, 500]
+    # NEEDA INPUT STH HERE
+    model = AutoEncoder()
 
     # Set optimization hyperparameters.
-    lr = None
-    num_epoch = None
-    lamb = None
+    lr = 0.1
+    num_epoch = 10
+    lamb = [0.001, 0.01, 0.1, 1]
 
     train(model, lr, lamb, train_matrix, zero_train_matrix,
           valid_data, num_epoch)
