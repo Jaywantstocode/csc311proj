@@ -1,6 +1,10 @@
+import sys
+sys.path.append("..")
+
 from utils import *
 
 import numpy as np
+from sklearn.impute import SimpleImputer 
 
 
 def sigmoid(x):
@@ -25,13 +29,20 @@ def neg_log_likelihood(data, theta, beta):
     # Implement the function as described in the docstring.             #
     #####################################################################
     log_lklihood = 0.
-    for i in range(len(data["user_id"])):
-        for j in range(len(data["question_id"])):
+    # print(len(data["user_id"]), theta.shape, len(data["question_id"]), beta.shape)
+    # assert(len(data["user_id"]) == theta.shape[1])
+    # assert(len(data["question_id"]) == beta.shape[1])
+    for i in range(theta.shape[0]):
+        for j in range(beta.shape[0]):
             if data["is_correct"][j] == 1:
+                # print(theta[i], beta[j])
+                # print(beta[j] , theta[i])
                 log_lklihood += (theta[i] - beta[j]) - np.log(1 + np.exp(theta[i] - beta[j]))
             else:
                 log_lklihood += np.log(1 - sigmoid(theta[i]-beta[j]))
                 # log_lklihood += np.log(1 - (np.exp(theta[i] - beta[j])/(1 + np.exp(theta[i] - beta[j]))))
+            # exit(1)
+
 
     #####################################################################
     #                       END OF YOUR CODE                            #
@@ -71,7 +82,7 @@ def update_theta_beta(data, lr, theta, beta):
     return theta, beta
 
 
-def irt(data, val_data, lr, iterations):
+def irt(matrix, data, val_data, lr, iterations):
     """ Train IRT model.
 
     You may optionally replace the function arguments to receive a matrix.
@@ -85,12 +96,21 @@ def irt(data, val_data, lr, iterations):
     :return: (theta, beta, val_acc_lst)
     """
     # TODO: Initialize theta and beta.
-    theta = None
-    beta = None
+    # data["user_id"]
+    print(data["user_id"][0], data["question_id"][0], data["is_correct"][0])
+    format = SimpleImputer()
+    format.fit(matrix)
+    question = format.transform(matrix)
+    format.fit(matrix.T)
+    student = format.transform(matrix.T)
 
+    theta = np.mean(student, axis=0).T
+    beta = 1 - np.mean(question, axis=0).T
+    
     val_acc_lst = []
 
     for i in range(iterations):
+        print(theta.shape, beta.shape)
         neg_lld = neg_log_likelihood(data, theta=theta, beta=beta)
         score = evaluate(data=val_data, theta=theta, beta=beta)
         val_acc_lst.append(score)
@@ -135,11 +155,11 @@ def main():
     weight_reg = 0
     iterations = 10
     learning_rate = 0.5
-    theta, beta, val_acc_lst = irt(train_data, val_data, learning_rate, iterations) 
+    theta, beta, val_acc_lst = irt(sparse_matrix, train_data, val_data, learning_rate, iterations) 
     acc = evaluate(val_data, theta, beta)
     print(f"The validation accuracy is {acc}")
 
-    thetaT, betaT, test_acc_lst = irt(train_data, test_data, learning_rate, iterations) 
+    thetaT, betaT, test_acc_lst = irt(sparse_matrix, train_data, test_data, learning_rate, iterations) 
     accT = evaluate(test_data, thetaT, betaT)
     print(f"The testing accuracy is {accT}")
     pass
@@ -153,7 +173,6 @@ def main():
     # TODO:                                                             #
     # Implement part (d)                                                #
     #####################################################################
-    irt(iterations=iterations)
 
 
     #####################################################################
