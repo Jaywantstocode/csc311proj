@@ -2,6 +2,7 @@ from utils import *
 
 import numpy as np
 from sklearn.impute import SimpleImputer 
+import matplotlib as plt
 
 
 def sigmoid(x):
@@ -98,7 +99,7 @@ def irt(matrix, data, val_data, lr, iterations):
     :return: (theta, beta, val_acc_lst)
     """
     # TODO: Initialize theta and beta.
-    print(data["user_id"][0], data["question_id"][0], data["is_correct"][0])
+    # print(data["user_id"][0], data["question_id"][0], data["is_correct"][0])
     format = SimpleImputer()
     format.fit(matrix)
     question = format.transform(matrix)
@@ -109,17 +110,19 @@ def irt(matrix, data, val_data, lr, iterations):
     beta = 1 - np.mean(question, axis=0).T
     
     val_acc_lst = []
+    val_llk_lst = []
 
     for i in range(iterations):
-        print(theta.shape, beta.shape)
+        # print(theta.shape, beta.shape)
         neg_lld = neg_log_likelihood(data, theta=theta, beta=beta)
+        val_llk_lst.append(neg_lld)
         score = evaluate(data=val_data, theta=theta, beta=beta)
         val_acc_lst.append(score)
         print("NLLK: {} \t Score: {}".format(neg_lld, score))
         theta, beta = update_theta_beta(data, lr, theta, beta)
 
     # TODO: You may change the return values to achieve what you want.
-    return theta, beta, val_acc_lst
+    return theta, beta, val_acc_lst, val_llk_lst
 
 
 def evaluate(data, theta, beta):
@@ -154,11 +157,19 @@ def main():
     # code, report the validation and test accuracy.                    #
     #####################################################################
     weight_reg = 0
-    iterations = 50
-    learning_rate = 0.1
-    theta, beta, val_acc_lst = irt(sparse_matrix, train_data, val_data, learning_rate, iterations) 
+    iterations = 10
+    learning_rate = 0.001
+    
+    theta, beta, val_acc_lst, val_llk_lst = irt(sparse_matrix, train_data, val_data, learning_rate, iterations) 
     acc = evaluate(val_data, theta, beta)
     print(f"The validation accuracy is {acc}")
+    iteration = [i for i in range(1, len(iterations) + 1)]
+    plt.plot(iteration, val_llk_lst, marker = 'o')
+    plt.xlabel("iterations")
+    plt.ylabel("Log-likelihood")
+    plt.title("Log-likelihood for validation set")
+    plt.show()
+    plt.savefig("parta_q2_validation (b).png")
 
     thetaT, betaT, test_acc_lst = irt(sparse_matrix, train_data, test_data, learning_rate, iterations) 
     accT = evaluate(test_data, thetaT, betaT)
