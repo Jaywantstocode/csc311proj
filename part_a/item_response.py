@@ -1,6 +1,3 @@
-import sys
-sys.path.append("..")
-
 from utils import *
 
 import numpy as np
@@ -35,12 +32,9 @@ def neg_log_likelihood(data, theta, beta):
     for i in range(theta.shape[0]):
         for j in range(beta.shape[0]):
             if data["is_correct"][j] == 1:
-                # print(theta[i], beta[j])
-                # print(beta[j] , theta[i])
                 log_lklihood += (theta[i] - beta[j]) - np.log(1 + np.exp(theta[i] - beta[j]))
             else:
                 log_lklihood += np.log(1 - sigmoid(theta[i]-beta[j]))
-                # log_lklihood += np.log(1 - (np.exp(theta[i] - beta[j])/(1 + np.exp(theta[i] - beta[j]))))
             # exit(1)
 
 
@@ -71,11 +65,19 @@ def update_theta_beta(data, lr, theta, beta):
     # TODO:                                                             #
     # Implement the function as described in the docstring.             #
     #####################################################################
-    new_theta = 1 - sigmoid(np.subtract(theta, beta))
-    new_beta = sigmoid(np.subtract(theta, beta)) - 1
-
-    theta = theta - lr * new_theta
-    beta = beta - lr * new_beta    
+    new_theta = np.zeros(theta.shape)
+    new_beta = np.zeros(beta.shape)
+    for i, q in enumerate(data["question_id"]):
+        u = data["user_id"][i]
+        new_theta[u] = 1 - sigmoid(theta[u] - beta[q])
+        new_beta[q] = sigmoid(theta[u] - beta[q]) - 1
+    # for i in range(len(theta)):
+    #     for j in range(len(beta)):
+    #         new_theta[i] = 1 - sigmoid((theta[i] - beta[j]))
+    #         new_beta[j] = sigmoid((theta[i] - beta[j])) - 1
+    
+    theta -=  lr * new_theta
+    beta -= lr * new_beta    
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
@@ -96,7 +98,6 @@ def irt(matrix, data, val_data, lr, iterations):
     :return: (theta, beta, val_acc_lst)
     """
     # TODO: Initialize theta and beta.
-    # data["user_id"]
     print(data["user_id"][0], data["question_id"][0], data["is_correct"][0])
     format = SimpleImputer()
     format.fit(matrix)
@@ -153,8 +154,8 @@ def main():
     # code, report the validation and test accuracy.                    #
     #####################################################################
     weight_reg = 0
-    iterations = 10
-    learning_rate = 0.5
+    iterations = 50
+    learning_rate = 0.1
     theta, beta, val_acc_lst = irt(sparse_matrix, train_data, val_data, learning_rate, iterations) 
     acc = evaluate(val_data, theta, beta)
     print(f"The validation accuracy is {acc}")
