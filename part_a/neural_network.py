@@ -1,3 +1,6 @@
+import sys
+sys.path.append("..")
+
 from utils import *
 from torch.autograd import Variable
 
@@ -121,7 +124,7 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
             nan_mask = np.isnan(train_data[user_id].unsqueeze(0).numpy())
             target[0][nan_mask] = output[0][nan_mask]
 
-            loss = torch.sum((output - target) ** 2.)
+            loss = torch.sum((output - target) ** 2.) + (lamb/2 * model.get_weight_norm())
             loss.backward()
 
             train_loss += loss.item()
@@ -172,15 +175,36 @@ def main():
     # Set model hyperparameters.
     k = [10, 50, 100, 200, 500]
     # NEEDA INPUT STH HERE
-    model = AutoEncoder()
+    for choice in k:
+        print(train_matrix.shape[1])
+        model = AutoEncoder(train_matrix.shape[1], k)
 
-    # Set optimization hyperparameters.
-    lr = 0.1
-    num_epoch = 10
-    lamb = [0.001, 0.01, 0.1, 1]
+        # Set optimization hyperparameters.
+        lr = 0.1
+        num_epoch = 10
+        lamb = [0.001, 0.01, 0.1, 1]
 
-    train(model, lr, lamb, train_matrix, zero_train_matrix,
-          valid_data, num_epoch)
+        train(model, lr, lamb, train_matrix, zero_train_matrix,
+            valid_data, num_epoch)
+        evaluate(model, zero_train_matrix, test_data)
+
+        # calculate the losses
+        for epoch in range(num_epoch):
+            model.eval()
+
+            total = 0
+            for i, user in enumerate(valid_data["user_id"]):
+                #Get the predicted output for the i'th user in the
+                #list of user id's on the attempted problem 
+                inputs = Variable(valid_data[user]).unsqueeze(0)
+                output = model(inputs)
+                target = valid_data["is_correct"][i]
+                guess = output[0][valid_data["question_id"][i]].item()
+                total += (guess - target)** 2.
+            return total/len(valid_data["user_id"])
+            
+
+        
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
