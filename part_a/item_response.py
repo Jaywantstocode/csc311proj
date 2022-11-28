@@ -109,20 +109,23 @@ def irt(matrix, data, val_data, lr, iterations):
     theta = np.mean(student, axis=0).T
     beta = 1 - np.mean(question, axis=0).T
     
+    train_llk = []
     val_acc_lst = []
     val_llk_lst = []
 
     for i in range(iterations):
         # print(theta.shape, beta.shape)
         neg_lld = neg_log_likelihood(data, theta=theta, beta=beta)
-        val_llk_lst.append(neg_lld)
+        train_llk.append(neg_lld)
+
+        val_llk_lst.append(neg_log_likelihood(val_data, theta, beta))
         score = evaluate(data=val_data, theta=theta, beta=beta)
         val_acc_lst.append(score)
         print("NLLK: {} \t Score: {}".format(neg_lld, score))
         theta, beta = update_theta_beta(data, lr, theta, beta)
 
     # TODO: You may change the return values to achieve what you want.
-    return theta, beta, val_acc_lst, val_llk_lst
+    return theta, beta, train_llk, val_acc_lst, val_llk_lst
 
 
 def evaluate(data, theta, beta):
@@ -157,17 +160,19 @@ def main():
     # code, report the validation and test accuracy.                    #
     #####################################################################
     weight_reg = 0
-    iterations = 10
+    iterations = 500
     learning_rate = 0.001
-    
-    theta, beta, val_acc_lst, val_llk_lst = irt(sparse_matrix, train_data, val_data, learning_rate, iterations) 
+
+    theta, beta, train_llk, val_acc_lst, val_llk_lst = irt(sparse_matrix, train_data, val_data, learning_rate, iterations) 
     acc = evaluate(val_data, theta, beta)
     print(f"The validation accuracy is {acc}")
     iteration = [i for i in range(1, len(iterations) + 1)]
-    plt.plot(iteration, val_llk_lst, marker = 'o')
+    plt.plot(iteration, val_llk_lst, marker = 'o', label='validation llk')
+    plt.plot(iteration, train_llk, marker = 'o', label='training llk')
+    plt.legend(loc = 'upper right')
     plt.xlabel("iterations")
     plt.ylabel("Log-likelihood")
-    plt.title("Log-likelihood for validation set")
+    plt.title("Log-likelihood for training and validation set")
     plt.show()
     plt.savefig("parta_q2_validation (b).png")
 
@@ -185,7 +190,18 @@ def main():
     # TODO:                                                             #
     # Implement part (d)                                                #
     #####################################################################
+    theta_lst = [theta[3], theta[17], theta[30]]
+    plt.plot(theta_lst, sigmoid(theta_lst, beta[3]), color = 'blue', label = 'j1')
+    plt.plot(theta_lst, sigmoid(theta_lst, beta[17]), color = 'orange', label = 'j2')
+    plt.plot(theta_lst, sigmoid(theta_lst, beta[30]), color = 'red', label = 'j3')
 
+    plt.xlabel('Theta')
+    plt.ylabel('Probability of the correct response')
+    plt.legend(loc = 'upper right')
+    plt.title('Probability of correctly answering 3 Questions Given Student Ability Theta')
+
+    plt.savefig('plt.savefig("parta_q2 (d).png")')
+    plt.show()
 
     #####################################################################
     #                       END OF YOUR CODE                            #
