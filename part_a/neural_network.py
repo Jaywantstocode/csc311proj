@@ -81,7 +81,12 @@ class AutoEncoder(nn.Module):
         # Use sigmoid activations for f and g.                              #
         #####################################################################
         out = inputs
-        out = sigmoid(self.h.weight * (sigmoid(self.g.weight * out + self.h.bias)) + self.g.bias)
+
+        # Encode inputs: 
+        code = torch.sigmoid(self.g(inputs))
+
+        # Decode the encoded input
+        out = torch.sigmoid(self.h(code))
         #####################################################################
         #                       END OF YOUR CODE                            #
         #####################################################################
@@ -124,7 +129,10 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
             nan_mask = np.isnan(train_data[user_id].unsqueeze(0).numpy())
             target[0][nan_mask] = output[0][nan_mask]
 
-            loss = torch.sum((output - target) ** 2.) + (lamb/2 * model.get_weight_norm())
+            loss = torch.sum((output - target) ** 2.) 
+            
+            # REMEMBER TO UNCOMMENT THIS WHEN DOING PART e) !!!!
+            # + (lamb/2 * model.get_weight_norm())
             loss.backward()
 
             train_loss += loss.item()
@@ -177,11 +185,11 @@ def main():
     # NEEDA INPUT STH HERE
     for choice in k:
         print(train_matrix.shape[1])
-        model = AutoEncoder(train_matrix.shape[1], k)
+        model = AutoEncoder(train_matrix.shape[1], choice)
 
         # Set optimization hyperparameters.
-        lr = 0.1
-        num_epoch = 10
+        lr = 0.01
+        num_epoch = 25
         lamb = [0.001, 0.01, 0.1, 1]
 
         train(model, lr, lamb, train_matrix, zero_train_matrix,
@@ -193,6 +201,7 @@ def main():
             model.eval()
 
             total = 0
+            # This still requires some change!!
             for i, user in enumerate(valid_data["user_id"]):
                 #Get the predicted output for the i'th user in the
                 #list of user id's on the attempted problem 
@@ -201,14 +210,25 @@ def main():
                 target = valid_data["is_correct"][i]
                 guess = output[0][valid_data["question_id"][i]].item()
                 total += (guess - target)** 2.
-            return total/len(valid_data["user_id"])
+            accuracy = total/len(valid_data["user_id"])
+            print(f"with k: {choice}, accuracy is: {accuracy}")
             
 
+    optimal_k = 200
+    lr = 0.01
+    epoch = 25
+    optimal_lamb = 0.1
+
+    model = AutoEncoder(train_matrix.shape[1], optimal_k)
+    train(model, lr, optimal_lamb, train_matrix, zero_train_matrix, valid_data, epoch)
+    val_acc = evaluate(model, zero_train_matrix, valid_data)
+    test_acc = evaluate(model, zero_train_matrix, test_data)
+    print(f"Validation accuracy with optimal k: {optimal_k} is: {val_acc}")
+    print(f"Test accuracy with optimal k: {optimal_k} is: {test_acc}")
         
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
-
 
 if __name__ == "__main__":
     main()
