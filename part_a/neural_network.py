@@ -129,10 +129,7 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
             nan_mask = np.isnan(train_data[user_id].unsqueeze(0).numpy())
             target[0][nan_mask] = output[0][nan_mask]
 
-            loss = torch.sum((output - target) ** 2.) 
-            
-            # REMEMBER TO UNCOMMENT THIS WHEN DOING PART e) !!!!
-            # + (lamb/2 * model.get_weight_norm())
+            loss = torch.sum((output - target) ** 2.) + (lamb/2 * model.get_weight_norm())
             loss.backward()
 
             train_loss += loss.item()
@@ -181,50 +178,38 @@ def main():
     # validation set.                                                   #
     #####################################################################
     # Set model hyperparameters.
-    k = [10, 50, 100, 200, 500]
-    # NEEDA INPUT STH HERE
-    for choice in k:
-        print(train_matrix.shape[1])
-        model = AutoEncoder(train_matrix.shape[1], choice)
+    # This part is to find what the optimal k and lambdas are
+    # k = [10, 50, 100, 200, 500]
+    # # NEEDA INPUT STH HERE
+    # for choice in k:
+    #     # print(train_matrix.shape[1])
+    #     model = AutoEncoder(train_matrix.shape[1], choice)
 
         # Set optimization hyperparameters.
-        lr = 0.01
-        num_epoch = 25
-        lamb = [0.001, 0.01, 0.1, 1]
+        # lr = 0.01
+        # num_epoch = 25
+        # lamb = [0.001, 0.01, 0.1, 1]
+        
+        # for lam in lamb: 
+        #     train(model, lr, lam, train_matrix, zero_train_matrix,
+        #         valid_data, num_epoch)
+        #     acc = evaluate(model, zero_train_matrix, test_data)
+        #     print(f"with lam: {lam} and k: {choice}, accuracy is: {acc}")
 
-        train(model, lr, lamb, train_matrix, zero_train_matrix,
-            valid_data, num_epoch)
-        evaluate(model, zero_train_matrix, test_data)
-
-        # calculate the losses
-        for epoch in range(num_epoch):
-            model.eval()
-
-            total = 0
-            # This still requires some change!!
-            for i, user in enumerate(valid_data["user_id"]):
-                #Get the predicted output for the i'th user in the
-                #list of user id's on the attempted problem 
-                inputs = Variable(valid_data[user]).unsqueeze(0)
-                output = model(inputs)
-                target = valid_data["is_correct"][i]
-                guess = output[0][valid_data["question_id"][i]].item()
-                total += (guess - target)** 2.
-            accuracy = total/len(valid_data["user_id"])
-            print(f"with k: {choice}, accuracy is: {accuracy}")
+        # print(f"with k: {choice}, accuracy is: {acc}")
             
 
-    optimal_k = 200
+    optimal_k = 50
     lr = 0.01
     epoch = 25
-    optimal_lamb = 0.1
+    optimal_lamb = 0.01
 
     model = AutoEncoder(train_matrix.shape[1], optimal_k)
     train(model, lr, optimal_lamb, train_matrix, zero_train_matrix, valid_data, epoch)
     val_acc = evaluate(model, zero_train_matrix, valid_data)
     test_acc = evaluate(model, zero_train_matrix, test_data)
-    print(f"Validation accuracy with optimal k: {optimal_k} is: {val_acc}")
-    print(f"Test accuracy with optimal k: {optimal_k} is: {test_acc}")
+    print(f"Validation accuracy with optimal k: {optimal_k} and optimal lambda: {optimal_lamb} is: {val_acc}")
+    print(f"Test accuracy with optimal k: {optimal_k} and optimal lambda: {optimal_lamb} is: {test_acc}")
         
     #####################################################################
     #                       END OF YOUR CODE                            #
