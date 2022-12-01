@@ -1,5 +1,4 @@
 from utils import *
-
 import numpy as np
 from sklearn.impute import SimpleImputer 
 import matplotlib as plt
@@ -36,7 +35,6 @@ def neg_log_likelihood(data, theta, beta):
                 log_lklihood += (theta[i] - beta[j]) - np.log(1 + np.exp(theta[i] - beta[j]))
             else:
                 log_lklihood += np.log(1 - sigmoid(theta[i]-beta[j]))
-            # exit(1)
 
 
     #####################################################################

@@ -6,21 +6,16 @@ from sklearn.impute import SimpleImputer
 import matplotlib as plt
 from item_response import sigmoid, update_theta_beta, neg_log_likelihood, irt
 
-parameters = {
-    "iterations" : 10,
-    "learing rate": 0.01,
-}
 
-
-def bootstrapping(matrix):
+def bootstrapping(data):
     """
     Generate a bagged dataset by randomly sampling with replacement
     """
-    n = len(matrix['user_id'])
+    n = len(data['user_id'])
     index = np.random.randint(0, n, n)
     new_data = {}
-    for keys in matrix.keys():
-        new_data[keys] = np.array(matrix[keys])[index]
+    for key in data:
+        new_data[key] = np.array(data[key])[index]
     return new_data
     
 def predict(data, theta, beta):
@@ -51,7 +46,6 @@ def bag_predict(data, models):
 
 
 def evaluate(preds, targets):
-    # NEEDA change this into just calculating the accuracy for from bagged_predict
     """ Evaluate the model given data and return the accuracy.
     :param data: A dictionary {user_id: list, question_id: list,
     is_correct: list}
@@ -64,7 +58,46 @@ def evaluate(preds, targets):
            / len(preds)
     
 
-
 def main():
+    np.random.seed(69)
+
+    train_data = load_train_csv("../data")
+    # You may optionally use the sparse matrix.
+    sparse_matrix = load_train_sparse("../data")
+    val_data = load_valid_csv("../data")
+    test_data = load_public_test_csv("../data")
+
     
-    pass
+    parameters = {
+        "iterations" : 10,
+        "learing rate": 0.01,
+        "num_models": 3
+    }
+
+    models_list = []
+
+    for i in range(parameters["num_models"]):
+        print(f"Model: {i + 1}")
+        bagged = bootstrapping(train_data)
+        models_list.append(irt(sparse_matrix, bagged, val_data, \
+                    parameters["learing rate"], parameters["iterations"])[0:2])
+    
+    # Get train data bagged predictions and get training accuracy
+    train_bagged_predictions = bag_predict(train_data, models_list)
+    bagged_train_accuracy = evaluate(train_bagged_predictions, train_data['is_correct'])
+
+    # Get validation data bagged predictions and get validation accuracy
+    valid_bagged_predictions = bag_predict(val_data, models_list)
+    bagged_valid_accuracy = evaluate(valid_bagged_predictions, val_data['is_correct'])
+
+    # Get train data bagged predictions and get training accuracy
+    test_bagged_predictions = bag_predict(test_data, models_list)
+    bagged_test_accuracy = evaluate(test_bagged_predictions, test_data['is_correct'])
+
+
+    print(f"Final Training Accuracy: {bagged_train_accuracy}")
+    print(f"Final Validation Accuracy: {bagged_valid_accuracy}")
+    print(f"Final Testing Accuracy: {bagged_test_accuracy}")
+
+if __name__ == "__main__":
+    main()
