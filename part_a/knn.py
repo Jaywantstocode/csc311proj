@@ -45,6 +45,7 @@ def knn_impute_by_item(matrix, valid_data, k):
     mat = nbrs.fit_transform(matrix.T)
     acc = sparse_matrix_evaluate_byq(valid_data, mat)
     print("Validation Accuracy: {}".format(acc))
+    return acc
 
     #####################################################################
     #                       END OF YOUR CODE                            #

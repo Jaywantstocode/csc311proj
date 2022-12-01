@@ -178,12 +178,12 @@ def main():
     # validation set.                                                   #
     #####################################################################
     # Set model hyperparameters.
-    k = [10, 50, 100, 200, 500]
-    out = {}
-    # NEEDA INPUT STH HERE
-    for choice in k:
-        print(train_matrix.shape[1])
-        model = AutoEncoder(train_matrix.shape[1], choice)
+    # This part is to find what the optimal k and lambdas are
+    # k = [10, 50, 100, 200, 500]
+    # # NEEDA INPUT STH HERE
+    # for choice in k:
+    #     # print(train_matrix.shape[1])
+    #     model = AutoEncoder(train_matrix.shape[1], choice)
 
         # Set optimization hyperparameters.
         # lr = 0.01
@@ -196,29 +196,10 @@ def main():
         #     acc = evaluate(model, zero_train_matrix, test_data)
         #     print(f"with lam: {lam} and k: {choice}, accuracy is: {acc}")
 
-        # calculate the losses
-        for epoch in range(num_epoch):
-            model.eval()
+        # print(f"with k: {choice}, accuracy is: {acc}")
+            
 
-            total = 0
-            # This still requires some change!!
-            print(valid_data)
-            for i, user in enumerate(valid_data["user_id"]):
-                #Get the predicted output for the i'th user in the
-                #list of user id's on the attempted problem 
-                inputs = Variable(zero_train_matrix[user]).unsqueeze(0)
-                output = model(inputs)
-                target = valid_data["is_correct"][i]
-                guess = output[0][valid_data["question_id"][i]].item()
-                total += (guess - target)** 2.
-            accuracy = total/len(valid_data["user_id"])
-            print(f"with k: {choice}, accuracy is: {accuracy}")
-            out[choice] = accuracy
-
-    # get the max from dictionary
-    max = max(out.items(), key=out.get)
-
-    optimal_k = max[0]
+    optimal_k = 50
     lr = 0.01
     epoch = 25
     optimal_lamb = 0.01
