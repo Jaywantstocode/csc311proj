@@ -179,16 +179,17 @@ def main():
     #####################################################################
     # Set model hyperparameters.
     # This part is to find what the optimal k and lambdas are
-    # k = [10, 50, 100, 200, 500]
+    k = [10, 50, 100, 200, 500]
     # # NEEDA INPUT STH HERE
-    # for choice in k:
-    #     # print(train_matrix.shape[1])
-    #     model = AutoEncoder(train_matrix.shape[1], choice)
 
-        # Set optimization hyperparameters.
-        # lr = 0.01
-        # num_epoch = 25
-        # lamb = [0.001, 0.01, 0.1, 1]
+    # Set optimization hyperparameters.
+    lr = 0.01
+    num_epoch = 25
+    lamb = [0.001, 0.01, 0.1, 1]
+
+    # for choice in k:
+        # print(train_matrix.shape[1])
+        # model = AutoEncoder(train_matrix.shape[1], choice)
         
         # for lam in lamb: 
         #     train(model, lr, lam, train_matrix, zero_train_matrix,
