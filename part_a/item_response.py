@@ -1,7 +1,7 @@
 from utils import *
 import numpy as np
 from sklearn.impute import SimpleImputer 
-import matplotlib as plt
+import matplotlib.pyplot as plt
 
 
 def sigmoid(x):
@@ -158,19 +158,19 @@ def main():
     # code, report the validation and test accuracy.                    #
     #####################################################################
     weight_reg = 0
-    iterations = 500
+    iterations = 10
     learning_rate = 0.001
 
     theta, beta, train_llk, val_acc_lst, val_llk_lst = irt(sparse_matrix, train_data, val_data, learning_rate, iterations) 
     acc = evaluate(val_data, theta, beta)
     print(f"The validation accuracy is {acc}")
-    iteration = [i for i in range(1, len(iterations) + 1)]
+    iteration = [i for i in range(1, iterations + 1)]
     plt.plot(iteration, val_llk_lst, marker = 'o', label='validation llk')
     plt.plot(iteration, train_llk, marker = 'o', label='training llk')
     plt.legend(loc = 'upper right')
     plt.xlabel("iterations")
-    plt.ylabel("Log-likelihood")
-    plt.title("Log-likelihood for training and validation set")
+    plt.ylabel("Negative Log-likelihood")
+    plt.title("Negative Log-likelihood for training and validation set")
     plt.show()
     plt.savefig("parta_q2_validation (b).png")
 
