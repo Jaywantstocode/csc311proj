@@ -29,16 +29,22 @@ def neg_log_likelihood(data, theta, beta):
     # print(len(data["user_id"]), theta.shape, len(data["question_id"]), beta.shape)
     # assert(len(data["user_id"]) == theta.shape[1])
     # assert(len(data["question_id"]) == beta.shape[1])
-    for i in range(theta.shape[0]):
-        for j in range(beta.shape[0]):
-            if data["is_correct"][j] == 1:
-                log_lklihood += (theta[i] - beta[j]) - np.log(1 + np.exp(theta[i] - beta[j]))
-            else:
-                log_lklihood += np.log(1 - sigmoid(theta[i]-beta[j]))
+
+    for i, q in enumerate(data["question_id"]):
+        prob = sigmoid(theta[data["user_id"][i]] - beta[q])
+        log_lklihood += data["is_correct"][i] * np.log(prob) + (1 - data["is_correct"][i]) * np.log(1-prob)
+    # for i in range(theta.shape[0]):
+    #     for j in range(beta.shape[0]):
+    #         if data["is_correct"][j] == 1:
+    #             log_lklihood += (theta[i] - beta[j]) - np.log(1 + np.exp(theta[i] - beta[j]))
+    #         else:
+    #             log_lklihood += np.log(1 - sigmoid(theta[i]-beta[j]))
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
     return -log_lklihood.item()
+    # return -log_lklihood
+
 
 
 def update_theta_beta(data, lr, theta, beta):
@@ -66,11 +72,11 @@ def update_theta_beta(data, lr, theta, beta):
     new_beta = np.zeros(beta.shape)
     for i, q in enumerate(data["question_id"]):
         u = data["user_id"][i]
-        new_theta[u] = data['is_correct'][i] - sigmoid(theta[u] - beta[q])
-        new_beta[q] = sigmoid(theta[u] - beta[q]) - data['is_correct'][i]
+        theta[u] -= lr * (sigmoid(theta[u] - beta[q]) - data['is_correct'][i])
+        beta[q] -= lr * (data['is_correct'][i] - sigmoid(theta[u] - beta[q]))
     
-    theta -=  lr * new_theta
-    beta -= lr * new_beta    
+    # theta -=  lr * new_theta.mean()
+    # beta -= lr * new_beta.mean()
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
