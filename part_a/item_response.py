@@ -68,15 +68,11 @@ def update_theta_beta(data, lr, theta, beta):
     # TODO:                                                             #
     # Implement the function as described in the docstring.             #
     #####################################################################
-    new_theta = np.zeros(theta.shape)
-    new_beta = np.zeros(beta.shape)
     for i, q in enumerate(data["question_id"]):
         u = data["user_id"][i]
         theta[u] -= lr * (sigmoid(theta[u] - beta[q]) - data['is_correct'][i])
         beta[q] -= lr * (data['is_correct'][i] - sigmoid(theta[u] - beta[q]))
     
-    # theta -=  lr * new_theta.mean()
-    # beta -= lr * new_beta.mean()
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
@@ -158,25 +154,24 @@ def main():
     # code, report the validation and test accuracy.                    #
     #####################################################################
     weight_reg = 0
-    iterations = 10
+    iterations = 100
     learning_rate = 0.001
 
     theta, beta, train_llk, val_acc_lst, val_llk_lst = irt(sparse_matrix, train_data, val_data, learning_rate, iterations) 
-    # acc = evaluate(val_data, theta, beta)
-    # print(f"The validation accuracy is {acc}")
-    # iteration = [i for i in range(1, iterations + 1)]
-    # plt.plot(iteration, val_llk_lst, marker = 'o', label='validation llk')
-    # plt.plot(iteration, train_llk, marker = 'o', label='training llk')
-    # plt.legend(loc = 'upper right')
-    # plt.xlabel("iterations")
-    # plt.ylabel("Negative Log-likelihood")
-    # plt.title("Negative Log-likelihood for training and validation set")
-    # plt.savefig("parta_q2_validation (b).png")
+    acc = evaluate(val_data, theta, beta)
+    print(f"The validation accuracy (100) is {acc}")
+    iteration = [i for i in range(1, iterations + 1)]
+    plt.plot(iteration, val_llk_lst, label='validation llk')
+    plt.plot(iteration, train_llk, label='training llk')
+    plt.legend(loc = 'upper right')
+    plt.xlabel("iterations")
+    plt.ylabel("Negative Log-likelihood")
+    plt.title("Negative Log-likelihood for training and validation set")
+    plt.savefig("parta_q2_validation (100) (b).png")
 
-    # thetaT, betaT, train_llk, test_acc_lst, test_llk_lst = irt(sparse_matrix, train_data, test_data, learning_rate, iterations) 
-    # accT = evaluate(test_data, thetaT, betaT)
-    # print(f"The testing accuracy is {accT}")
-    # pass
+    thetaT, betaT, train_llk, test_acc_lst, test_llk_lst = irt(sparse_matrix, train_data, test_data, learning_rate, iterations) 
+    accT = evaluate(test_data, thetaT, betaT)
+    print(f"The testing accuracy (100) is {accT}")
 
 
     #####################################################################
@@ -187,17 +182,18 @@ def main():
     # TODO:                                                             #
     # Implement part (d)                                                #
     #####################################################################
-    theta_lst = np.array([theta[3], theta[17], theta[30]])
-    plt.plot(theta_lst, sigmoid(theta_lst[0] - beta[3]), color = 'blue', label = 'j1')
-    plt.plot(theta_lst, sigmoid(theta_lst[1] - beta[17]), color = 'orange', label = 'j2')
-    plt.plot(theta_lst, sigmoid(theta_lst[2] - beta[30]), color = 'red', label = 'j3')
+    theta_lst = np.reshape(np.linspace(-5, 5, num=101), (101, 1))
+    # Randomly chose the questions manually
+    plt.plot(theta_lst, sigmoid(theta_lst - beta[3]), color = 'blue', label = 'j1')
+    plt.plot(theta_lst, sigmoid(theta_lst - beta[17]), color = 'orange', label = 'j2')
+    plt.plot(theta_lst, sigmoid(theta_lst - beta[30]), color = 'red', label = 'j3')
 
     plt.xlabel('Theta')
     plt.ylabel('Probability of the correct response')
     plt.legend(loc = 'upper right')
     plt.title('Probability of correctly answering 3 Questions Given Student Ability Theta')
 
-    plt.savefig('plt.savefig("parta_q2 (d).png")')
+    plt.savefig("parta_q2 (d).png")
     plt.show()
 
     #####################################################################
