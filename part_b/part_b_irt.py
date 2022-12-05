@@ -9,7 +9,7 @@ import pandas as pd
 from original_item_response import sigmoid
 
 # size of students, questions and subjects
-N, D, S = 542, 1774, 388
+N, D = 542, 1774
 
 def neg_log_likelihood(data, theta, beta, c, k ):
     """ Compute the negative log-likelihood.
@@ -24,14 +24,13 @@ def neg_log_likelihood(data, theta, beta, c, k ):
     """
     log_lklihood = 0
 
-    # # N x D matrix: for each student, the avg familiarity on the subjects included by each question.
-    # alpha_mat = (alpha @ q_meta.T) / np.count_nonzero(q_meta, axis=1)
-
+    # N x D matrix: for each student, the avg familiarity on the subjects included by each question.
+    # c is the probability that a student can correctly answer the question (being set to 0.25 as default)
     for i, q in enumerate(data["question_id"]):
         u = data["user_id"][i]
 
         # prob = p(c_uq|theta_u, beta_q)
-        x = k[q] * (theta[u] - beta[q] ) #+ alpha_mat[u][q])
+        x = k[q] * (theta[u] - beta[q] ) 
         prob = sigmoid(x) * (1-c) + c
 
         correct = data["is_correct"][i]
@@ -39,8 +38,8 @@ def neg_log_likelihood(data, theta, beta, c, k ):
     return -log_lklihood
 
 
-def update_parameters(train_matrix, zero_train_matrix, lr, theta, beta, alpha, c, k, lambd, q_meta):
-    """ Update theta, beta alpha, c and k using gradient descent.
+def update_parameters(train_matrix, zero_train_matrix, lr, theta, beta, c, k, lamb):
+    """ Update theta, beta, c and k using gradient descent.
     You are using alternating gradient descent. Your update should look:
     for i in iterations ...
         theta <- new_theta
@@ -52,7 +51,8 @@ def update_parameters(train_matrix, zero_train_matrix, lr, theta, beta, alpha, c
     :param beta: Vector
     :param c: float
     :param k: Vector
-    :param lambd: float
+    :param lamb
+: float
     :return: tuple of vectors
     """
     # create matrix representation for calculation convenience
@@ -60,7 +60,6 @@ def update_parameters(train_matrix, zero_train_matrix, lr, theta, beta, alpha, c
     beta_mat = np.ones((N, 1)) @ np.expand_dims(beta, axis=0)
     k_mat = np.ones((N, 1)) @ np.expand_dims(k, axis=0)
     # N x D matrix: for each student, the avg familiarity on the subjects included by each question.
-    # alpha_mat = (alpha @ q_meta.T) / np.count_nonzero(q_meta, axis=1)
 
     nan_mask = np.isnan(train_matrix)
 
@@ -69,21 +68,19 @@ def update_parameters(train_matrix, zero_train_matrix, lr, theta, beta, alpha, c
     # probabilities p(c_uq|theta_u, beta_q) for each u and q
     prob = sigmoid(x) * (1-c) + c
     prob[nan_mask] = 0
-    # d_theta = sum_q_[prob-correct] * (1-c) + lambd * theta
-    theta -= lr * (np.sum((prob - zero_train_matrix) * k_mat, axis=1) * (1-c) + lambd * theta)
+    
+    theta -= lr * (np.sum((prob - zero_train_matrix) * k_mat, axis=1) * (1-c) + lamb
+ * theta)
     theta_mat = np.expand_dims(theta, axis=1) @ np.ones((1, D))
 
     # update beta
-    # d_beta = sum_u_[prob-correct] * (1-c) + lambd * beta
-    beta -= lr * (np.sum((zero_train_matrix - prob) * k_mat, axis=0) * (1-c) + lambd * beta)
+    beta -= lr * (np.sum((zero_train_matrix - prob) * k_mat, axis=0) * (1-c) + lamb
+ * beta)
     beta_mat = np.ones((N, 1)) @ np.expand_dims(beta, axis=0)
 
-
-
     # update k
-    # d_k = sum_u_[(prob-correct)*(theta - beta + alpha)] * (1-c) + lambd * k
-    k -= lr * (np.sum((prob - zero_train_matrix) * (theta_mat - beta_mat), axis=0) * (1-c) + lambd * k) 
-    k_mat = np.ones((N, 1)) @ np.expand_dims(k, axis=0)
+    k -= lr * (np.sum((prob - zero_train_matrix) * (theta_mat - beta_mat), axis=0) * (1-c) + lamb
+ * k) 
 
     # update c
     c -= lr * (1 - sigmoid(x).mean())
@@ -91,10 +88,10 @@ def update_parameters(train_matrix, zero_train_matrix, lr, theta, beta, alpha, c
     c = max(0, c)
     c = min(1, c)
 
-    return theta, beta, alpha, c, k
+    return theta, beta, c, k
 
 
-def irt(data, train_matrix, zero_train_matrix, val_data, lr, iterations, lambd):
+def irt(data, train_matrix, zero_train_matrix, val_data, lr, iterations, lamb):
     """ Train IRT model.
     :param data: A dictionary {user_id: list, question_id: list,
     is_correct: list}
@@ -104,8 +101,9 @@ def irt(data, train_matrix, zero_train_matrix, val_data, lr, iterations, lambd):
     is_correct: list}
     :param lr: float
     :param iterations: int
-    :param lambd: float
-    :return: (theta, beta, alpha, c, k)
+    :param lamb
+: float
+    :return: (theta, beta, c, k)
     """
     theta = np.ones(N) * 0.5
     beta = np.ones(D) * 0.5
@@ -122,7 +120,7 @@ def irt(data, train_matrix, zero_train_matrix, val_data, lr, iterations, lambd):
         train_neg_llds.append(neg_log_likelihood(data, theta, beta, c, k))
         val_neg_llds.append(neg_log_likelihood(val_data, theta, beta, c, k))
 
-        theta, beta, c, k = update_parameters(train_matrix, zero_train_matrix, lr, theta, beta, c, k, lambd)
+        theta, beta, c, k = update_parameters(train_matrix, zero_train_matrix, lr, theta, beta, c, k, lamb)
         
         val_acc = evaluate(val_data, theta, beta, c, k)
         train_acc = evaluate(data, theta, beta, c, k)
@@ -171,8 +169,6 @@ def evaluate(data, theta, beta, c, k):
     pred = []
 
     # N x D matrix: for each student, the avg familiarity on the subjects included by each question.
-    # alpha_mat = (alpha @ q_meta.T) / np.count_nonzero(q_meta, axis=1)
-
     for i, q in enumerate(data["question_id"]):
         u = data["user_id"][i]
         x = ((theta[u] - beta[q]) * k[q]).sum()
@@ -194,18 +190,17 @@ def main():
     test_data = load_public_test_csv("../data")
     private_data = load_private_test_csv("../data")
 
-    lr = 0.02
-    lambd = 0.1
-    iterations = 60
-    theta, beta, alpha, c, k = irt(train_data, train_matrix, zero_train_matrix, val_data, lr, iterations, alpha, lambd)
+    lr = 0.01
+    lamb = 0.1
+    iterations = 37
+    theta, beta, c, k = irt(train_data, train_matrix, zero_train_matrix, val_data, lr, iterations, lamb)
 
-    # part (c) report the fianl validation and test accuracies
-    final_val_acc = evaluate(val_data, theta, beta, alpha, c, k)
-    final_test_acc = evaluate(test_data, theta, beta, alpha, c, k)
-    print(f"The final validation accuracy is {final_val_acc}, the final test accuracy is {final_test_acc}")
-
-    final_train_acc = evaluate(train_data, theta, beta, alpha, c, k)  
+    final_train_acc = evaluate(train_data, theta, beta, c, k)  
     print(f"The final training accuracy is {final_train_acc}")
+
+    final_val_acc = evaluate(val_data, theta, beta, c, k)
+    final_test_acc = evaluate(test_data, theta, beta, c, k)
+    print(f"The final validation accuracy is {final_val_acc}, the final test accuracy is {final_test_acc}")
 
     # private test
     pred = []
