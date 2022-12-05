@@ -195,7 +195,7 @@ def main():
 
     lr = 0.01
     lamb = 0.1
-    iterations = 37
+    iterations = 100
     theta, beta, c, k = irt(train_data, train_matrix, zero_train_matrix, val_data, lr, iterations, lamb)
 
     final_train_acc = evaluate(train_data, theta, beta, c, k)  
