@@ -26,25 +26,14 @@ def neg_log_likelihood(data, theta, beta):
     # Implement the function as described in the docstring.             #
     #####################################################################
     log_lklihood = 0.
-    # print(len(data["user_id"]), theta.shape, len(data["question_id"]), beta.shape)
-    # assert(len(data["user_id"]) == theta.shape[1])
-    # assert(len(data["question_id"]) == beta.shape[1])
 
     for i, q in enumerate(data["question_id"]):
         prob = sigmoid(theta[data["user_id"][i]] - beta[q])
         log_lklihood += data["is_correct"][i] * np.log(prob) + (1 - data["is_correct"][i]) * np.log(1-prob)
-    # for i in range(theta.shape[0]):
-    #     for j in range(beta.shape[0]):
-    #         if data["is_correct"][j] == 1:
-    #             log_lklihood += (theta[i] - beta[j]) - np.log(1 + np.exp(theta[i] - beta[j]))
-    #         else:
-    #             log_lklihood += np.log(1 - sigmoid(theta[i]-beta[j]))
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
     return -log_lklihood.item()
-    # return -log_lklihood
-
 
 
 def update_theta_beta(data, lr, theta, beta):
@@ -93,7 +82,6 @@ def irt(matrix, data, val_data, lr, iterations):
     :return: (theta, beta, val_acc_lst)
     """
     # TODO: Initialize theta and beta.
-    # print(data["user_id"][0], data["question_id"][0], data["is_correct"][0])
     format = SimpleImputer()
     format.fit(matrix)
     question = format.transform(matrix)
@@ -108,7 +96,6 @@ def irt(matrix, data, val_data, lr, iterations):
     val_llk_lst = []
 
     for i in range(iterations):
-        # print(theta.shape, beta.shape)
         neg_lld = neg_log_likelihood(data, theta=theta, beta=beta)
         train_llk.append(neg_lld)
 
@@ -158,6 +145,7 @@ def main():
     learning_rate = 0.001
 
     theta, beta, train_llk, val_acc_lst, val_llk_lst = irt(sparse_matrix, train_data, val_data, learning_rate, iterations) 
+    print(f"training: {evaluate(train_data, theta, beta)}")
     acc = evaluate(val_data, theta, beta)
     print(f"The validation accuracy (100) is {acc}")
     iteration = [i for i in range(1, iterations + 1)]
