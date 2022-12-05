@@ -1,7 +1,7 @@
 from utils import *
 import numpy as np
 from sklearn.impute import SimpleImputer 
-import matplotlib as plt
+import matplotlib.pyplot as plt
 
 
 def sigmoid(x):
@@ -29,18 +29,22 @@ def neg_log_likelihood(data, theta, beta):
     # print(len(data["user_id"]), theta.shape, len(data["question_id"]), beta.shape)
     # assert(len(data["user_id"]) == theta.shape[1])
     # assert(len(data["question_id"]) == beta.shape[1])
-    for i in range(theta.shape[0]):
-        for j in range(beta.shape[0]):
-            if data["is_correct"][j] == 1:
-                log_lklihood += (theta[i] - beta[j]) - np.log(1 + np.exp(theta[i] - beta[j]))
-            else:
-                log_lklihood += np.log(1 - sigmoid(theta[i]-beta[j]))
 
-
+    for i, q in enumerate(data["question_id"]):
+        prob = sigmoid(theta[data["user_id"][i]] - beta[q])
+        log_lklihood += data["is_correct"][i] * np.log(prob) + (1 - data["is_correct"][i]) * np.log(1-prob)
+    # for i in range(theta.shape[0]):
+    #     for j in range(beta.shape[0]):
+    #         if data["is_correct"][j] == 1:
+    #             log_lklihood += (theta[i] - beta[j]) - np.log(1 + np.exp(theta[i] - beta[j]))
+    #         else:
+    #             log_lklihood += np.log(1 - sigmoid(theta[i]-beta[j]))
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
-    return -log_lklihood
+    return -log_lklihood.item()
+    # return -log_lklihood
+
 
 
 def update_theta_beta(data, lr, theta, beta):
@@ -64,19 +68,11 @@ def update_theta_beta(data, lr, theta, beta):
     # TODO:                                                             #
     # Implement the function as described in the docstring.             #
     #####################################################################
-    new_theta = np.zeros(theta.shape)
-    new_beta = np.zeros(beta.shape)
     for i, q in enumerate(data["question_id"]):
         u = data["user_id"][i]
-        new_theta[u] = 1 - sigmoid(theta[u] - beta[q])
-        new_beta[q] = sigmoid(theta[u] - beta[q]) - 1
-    # for i in range(len(theta)):
-    #     for j in range(len(beta)):
-    #         new_theta[i] = 1 - sigmoid((theta[i] - beta[j]))
-    #         new_beta[j] = sigmoid((theta[i] - beta[j])) - 1
+        theta[u] -= lr * (sigmoid(theta[u] - beta[q]) - data['is_correct'][i])
+        beta[q] -= lr * (data['is_correct'][i] - sigmoid(theta[u] - beta[q]))
     
-    theta -=  lr * new_theta
-    beta -= lr * new_beta    
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
@@ -158,26 +154,24 @@ def main():
     # code, report the validation and test accuracy.                    #
     #####################################################################
     weight_reg = 0
-    iterations = 500
+    iterations = 100
     learning_rate = 0.001
 
     theta, beta, train_llk, val_acc_lst, val_llk_lst = irt(sparse_matrix, train_data, val_data, learning_rate, iterations) 
     acc = evaluate(val_data, theta, beta)
-    print(f"The validation accuracy is {acc}")
-    iteration = [i for i in range(1, len(iterations) + 1)]
-    plt.plot(iteration, val_llk_lst, marker = 'o', label='validation llk')
-    plt.plot(iteration, train_llk, marker = 'o', label='training llk')
+    print(f"The validation accuracy (100) is {acc}")
+    iteration = [i for i in range(1, iterations + 1)]
+    plt.plot(iteration, val_llk_lst, label='validation llk')
+    plt.plot(iteration, train_llk, label='training llk')
     plt.legend(loc = 'upper right')
     plt.xlabel("iterations")
-    plt.ylabel("Log-likelihood")
-    plt.title("Log-likelihood for training and validation set")
-    plt.show()
-    plt.savefig("parta_q2_validation (b).png")
+    plt.ylabel("Negative Log-likelihood")
+    plt.title("Negative Log-likelihood for training and validation set")
+    plt.savefig("parta_q2_validation (100) (b).png")
 
-    thetaT, betaT, test_acc_lst = irt(sparse_matrix, train_data, test_data, learning_rate, iterations) 
+    thetaT, betaT, train_llk, test_acc_lst, test_llk_lst = irt(sparse_matrix, train_data, test_data, learning_rate, iterations) 
     accT = evaluate(test_data, thetaT, betaT)
-    print(f"The testing accuracy is {accT}")
-    pass
+    print(f"The testing accuracy (100) is {accT}")
 
 
     #####################################################################
@@ -188,17 +182,18 @@ def main():
     # TODO:                                                             #
     # Implement part (d)                                                #
     #####################################################################
-    theta_lst = [theta[3], theta[17], theta[30]]
-    plt.plot(theta_lst, sigmoid(theta_lst, beta[3]), color = 'blue', label = 'j1')
-    plt.plot(theta_lst, sigmoid(theta_lst, beta[17]), color = 'orange', label = 'j2')
-    plt.plot(theta_lst, sigmoid(theta_lst, beta[30]), color = 'red', label = 'j3')
+    theta_lst = np.reshape(np.linspace(-5, 5, num=101), (101, 1))
+    # Randomly chose the questions manually
+    plt.plot(theta_lst, sigmoid(theta_lst - beta[3]), color = 'blue', label = 'j1')
+    plt.plot(theta_lst, sigmoid(theta_lst - beta[17]), color = 'orange', label = 'j2')
+    plt.plot(theta_lst, sigmoid(theta_lst - beta[30]), color = 'red', label = 'j3')
 
     plt.xlabel('Theta')
     plt.ylabel('Probability of the correct response')
     plt.legend(loc = 'upper right')
     plt.title('Probability of correctly answering 3 Questions Given Student Ability Theta')
 
-    plt.savefig('plt.savefig("parta_q2 (d).png")')
+    plt.savefig("parta_q2 (d).png")
     plt.show()
 
     #####################################################################

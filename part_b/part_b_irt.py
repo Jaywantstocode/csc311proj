@@ -2,7 +2,7 @@ from utils import *
 
 import numpy as np
 import matplotlib.pyplot as plt
-
+from sklearn.impute import SimpleImputer
 import random
 import ast
 import pandas as pd
@@ -69,18 +69,15 @@ def update_parameters(train_matrix, zero_train_matrix, lr, theta, beta, c, k, la
     prob = sigmoid(x) * (1-c) + c
     prob[nan_mask] = 0
     
-    theta -= lr * (np.sum((prob - zero_train_matrix) * k_mat, axis=1) * (1-c) + lamb
- * theta)
+    theta -= lr * (np.sum((prob - zero_train_matrix) * k_mat, axis=1) * (1-c) + lamb * theta)
     theta_mat = np.expand_dims(theta, axis=1) @ np.ones((1, D))
 
     # update beta
-    beta -= lr * (np.sum((zero_train_matrix - prob) * k_mat, axis=0) * (1-c) + lamb
- * beta)
+    beta -= lr * (np.sum((zero_train_matrix - prob) * k_mat, axis=0) * (1-c) + lamb * beta)
     beta_mat = np.ones((N, 1)) @ np.expand_dims(beta, axis=0)
 
     # update k
-    k -= lr * (np.sum((prob - zero_train_matrix) * (theta_mat - beta_mat), axis=0) * (1-c) + lamb
- * k) 
+    k -= lr * (np.sum((prob - zero_train_matrix) * (theta_mat - beta_mat), axis=0) * (1-c) + lamb * k) 
 
     # update c
     c -= lr * (1 - sigmoid(x).mean())
@@ -105,8 +102,14 @@ def irt(data, train_matrix, zero_train_matrix, val_data, lr, iterations, lamb):
 : float
     :return: (theta, beta, c, k)
     """
-    theta = np.ones(N) * 0.5
-    beta = np.ones(D) * 0.5
+    format = SimpleImputer()
+    format.fit(train_matrix)
+    question = format.transform(train_matrix)
+    format.fit(train_matrix.T)
+    student = format.transform(train_matrix.T)
+
+    theta = np.mean(student, axis=0).T
+    beta = 1 - np.mean(question, axis=0).T
     c = 0.25
     k = np.ones((D,)) * 0.5
 
