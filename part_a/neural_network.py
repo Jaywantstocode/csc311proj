@@ -67,6 +67,7 @@ class AutoEncoder(nn.Module):
 
         :return: float
         """
+        # For the regularizer
         g_w_norm = torch.norm(self.g.weight, 2) ** 2
         h_w_norm = torch.norm(self.h.weight, 2) ** 2
         return g_w_norm + h_w_norm
@@ -115,7 +116,7 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch, t
 
     train_loss_lst = []
     val_loss_lst = []
-    # Define optimizers and loss function.
+    # Define optimizers and loss function. Stochastic Gradient Descent
     optimizer = optim.SGD(model.parameters(), lr=lr)
     num_student = train_data.shape[0]
 
@@ -125,7 +126,8 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch, t
         for user_id in range(num_student):
             inputs = Variable(zero_train_data[user_id]).unsqueeze(0)
             target = inputs.clone()
-
+            
+            # Set the gradients to 0 to prevent accumulating the gradients from multiple passes
             optimizer.zero_grad()
             output = model(inputs)
 
@@ -134,9 +136,11 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch, t
             target[0][nan_mask] = output[0][nan_mask]
 
             loss = torch.sum((output - target) ** 2.) + (lamb/2 * model.get_weight_norm())
+            # Computes the dloss/dx 
             loss.backward()
 
             train_loss += loss.item()
+            # Updates the value of optimizer with the gradient 
             optimizer.step()
         
         train_loss_lst.append(eval_loss(model, zero_train_data, train_dic))
@@ -169,6 +173,7 @@ def evaluate(model, train_data, valid_data):
     for i, u in enumerate(valid_data["user_id"]):
         inputs = Variable(train_data[u]).unsqueeze(0)
         output = model(inputs)
+        # If the prob from output is >= 0.5, then it is correct. 
         guess = output[0][valid_data["question_id"][i]].item() >= 0.5
         if guess == valid_data["is_correct"][i]:
             correct += 1
